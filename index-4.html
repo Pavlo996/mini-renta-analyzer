@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#17324d">
+<title>Lottery Analysis Lab v3</title>
+<style>
+:root{--bg:#f2f5f7;--card:#fff;--text:#17212b;--muted:#66727e;--nav:#17324d;--green:#19745a;--blue:#2d62a8;--red:#b23a3a;--orange:#a35d16;--line:#d9e1e6}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{position:sticky;top:0;z-index:5;background:var(--nav);color:#fff;padding:14px 16px;box-shadow:0 2px 10px #0002}
+header h1{font-size:1.22rem;margin:0}header p{margin:3px 0 0;font-size:.84rem;opacity:.8}
+main{max-width:980px;margin:auto;padding:14px}.notice{background:#fff6d8;border:1px solid #ead58c;border-radius:12px;padding:11px;margin-bottom:12px}
+.tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:12px}.tab{border:0;border-radius:10px;padding:11px 5px;background:#dfe7ed;color:#17324d;font-weight:800}.tab.active{background:#17324d;color:#fff}
+.panel{display:none;background:#fff;border-radius:14px;padding:15px;box-shadow:0 2px 12px #0000000d}.panel.active{display:block}
+h2{margin-top:0}h3{margin-top:24px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+label{font-size:.9rem;font-weight:700}input,textarea{width:100%;margin-top:5px;padding:10px;border:1px solid var(--line);border-radius:9px;font:inherit;background:#fff}textarea{font-family:ui-monospace,Consolas,monospace;font-size:.84rem}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}button{border:0;border-radius:9px;padding:10px 14px;font-weight:800;background:#19745a;color:#fff}.secondary{background:#e6edf2;color:#17324d}.danger{background:#b23a3a}.muted{color:var(--muted)}.status{margin-top:10px;font-weight:700}
+.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.card{background:#fbfcfd;border:1px solid var(--line);border-radius:11px;padding:12px}.big{font-size:1.45rem;font-weight:900}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:10px}table{width:100%;border-collapse:collapse;font-size:.86rem}th,td{padding:8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{background:#eef3f6;position:sticky;top:0}.num{font-weight:900}
+.red{color:var(--red);font-weight:900}.green{color:var(--green);font-weight:900}.blue{color:var(--blue);font-weight:900}.orange{color:var(--orange);font-weight:900}
+.chips{display:flex;gap:8px;flex-wrap:wrap}.chip{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;color:#fff;background:#17324d;font-weight:900}.combo{border:1px solid var(--line);border-radius:10px;padding:10px;margin:8px 0;display:flex;justify-content:space-between;gap:10px}.combo strong{letter-spacing:.08em}
+.badge{display:inline-block;padding:7px 11px;border-radius:999px;background:#e6edf2;font-weight:900}.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.small{font-size:.82rem}.help li{margin:8px 0}footer{max-width:980px;margin:auto;padding:18px;color:var(--muted);font-size:.8rem}
+@media(max-width:650px){.grid,.cards,.two{grid-template-columns:1fr}.tabs{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<header><h1>Lottery Analysis Lab v3</h1><p>7 чисел із 24 · статистичний дослідницький режим</p></header>
+<main>
+<div class="notice"><strong>Важливо:</strong> це не передбачення випадкового тиражу. Програма лише аналізує історію, формує категорії та звужує поле кандидатів.</div>
+<nav class="tabs">
+<button class="tab active" data-tab="data">1. Дані</button>
+<button class="tab" data-tab="stats">2. Статистика</button>
+<button class="tab" data-tab="cores">3. Ядра</button>
+<button class="tab" data-tab="gen">4. Комбінації</button>
+<button class="tab" data-tab="help">5. Інструкція</button>
+</nav>
+
+<section id="data" class="panel active">
+<h2>Архів тиражів</h2>
+<div class="grid">
+<label>Максимальне число<input id="maxN" type="number" value="24" min="7" max="99"></label>
+<label>Чисел у тиражі<input id="drawSize" type="number" value="7" min="2" max="20"></label>
+<label>Довжина поточного раунду<input id="roundSize" type="number" value="4" min="2" max="50"></label>
+<label>Період частоти<input id="freqWindow" type="number" value="20" min="5" max="200"></label>
+</div>
+<p class="muted small">Один рядок: <code>2026-07-13,10,13,14,17,20,23,24</code>. Найновіший рядок — зверху.</p>
+<textarea id="draws" rows="15" spellcheck="false"></textarea>
+<div class="actions">
+<button id="sample">Завантажити приклад</button>
+<button id="analyze">Провести аналіз</button>
+<button id="clear" class="secondary">Очистити</button>
+</div>
+<div id="status" class="status"></div>
+</section>
+
+<section id="stats" class="panel">
+<h2>Статистика поточного стану</h2>
+<div id="badge" class="badge">Немає даних</div>
+<div id="cards" class="cards" style="margin-top:12px"></div>
+<h3>Паспорт чисел</h3>
+<div class="table-wrap"><table><thead><tr><th>№</th><th>Категорія</th><th>У раунді</th><th>За період</th><th>Пауза</th><th>Бал</th><th>Пояснення</th></tr></thead><tbody id="numBody"></tbody></table></div>
+<h3>Пари</h3>
+<div class="two">
+<div class="card"><h4>Найчастіші</h4><div id="pairs"></div></div>
+<div class="card"><h4>Послідовні</h4><div id="cons"></div></div>
+</div>
+</section>
+
+
+<section id="cores" class="panel">
+<h2>Core Finder</h2>
+<p class="muted">Пошук найкращих ядер із 2–4 чисел за частотою, паузою та балами окремих чисел.</p>
+<div class="grid">
+<label>Розмір ядра<select id="coreSize"><option value="2">2 числа</option><option value="3" selected>3 числа</option><option value="4">4 числа</option></select></label>
+<label>Показати ядер<input id="coreCount" type="number" value="10" min="1" max="30"></label>
+<label>Період аналізу<input id="coreWindow" type="number" value="30" min="10" max="100"></label>
+<label>Мінімум появ<input id="coreMinFreq" type="number" value="1" min="0" max="20"></label>
+</div>
+<div class="actions"><button id="findCores">Знайти ядра</button><button id="selectTopCore" class="secondary">Вибрати найкраще</button></div>
+<h3>Найкращі ядра</h3><div id="coreList"></div>
+<h3>Вибране ядро</h3><div id="selectedCore" class="chips"></div>
+</section>
+
+<section id="gen" class="panel">
+<h2>Генератор комбінацій</h2><p class="muted">Якщо ядро вибране, воно автоматично входить у кожну фінальну комбінацію.</p>
+<div class="grid">
+<label>Кандидатів<input id="candCount" type="number" value="15" min="7" max="24"></label>
+<label>Комбінацій<input id="comboCount" type="number" value="10" min="1" max="100"></label>
+<label>Мінімум непарних<input id="minOdd" type="number" value="2" min="0" max="7"></label>
+<label>Максимум непарних<input id="maxOdd" type="number" value="5" min="0" max="7"></label>
+</div>
+<div class="actions"><button id="generate">Згенерувати</button><button id="copy" class="secondary">Копіювати</button></div>
+<h3>Пул кандидатів</h3><div id="pool" class="chips"></div>
+<h3>Фінальні варіанти</h3><div id="combos"></div>
+</section>
+
+<section id="help" class="panel">
+<h2>Як користуватися</h2>
+<ol class="help">
+<li>Скопіюй архів Mini Renta у форматі: дата і 7 чисел через кому.</li>
+<li>Встав його у вкладці <strong>«Дані»</strong>.</li>
+<li>Натисни <strong>«Провести аналіз»</strong>.</li>
+<li>У статистиці дивись категорії: червоне — не було, зелене — single, синє — two, помаранчеве — three+.</li>
+<li>У вкладці <strong>«Комбінації»</strong> обери 10–20 кандидатів і кількість варіантів.</li>
+</ol>
+<p><strong>Раунд</strong> зараз є змінним дослідницьким параметром. Для Mini Renta за замовчуванням використано 4 тиражі, але пізніше ми калібруватимемо це бек-тестом.</p>
+<p class="muted">Дані зберігаються тільки в браузері цього телефону.</p>
+</section>
+</main>
+<footer>Lottery Analysis Lab v3 · без гарантій виграшу · відповідальна гра</footer>
+
+<script>
+const $=id=>document.getElementById(id);let A=null,coreResults=[],selectedCore=[];
+const sample=`2026-07-13,10,13,14,17,20,23,24
+2026-07-12,1,4,6,10,12,14,21
+2026-07-11,2,3,8,13,20,21,24
+2026-07-10,2,9,13,18,19,20,22
+2026-07-09,3,7,11,12,14,17,24
+2026-07-08,3,6,9,12,15,20,24
+2026-07-07,1,3,8,10,14,18,23
+2026-07-06,7,8,10,12,18,20,24
+2026-07-05,1,2,3,5,7,16,23
+2026-07-04,5,9,11,17,18,19,20
+2026-07-03,2,4,6,8,13,20,22
+2026-07-02,3,8,11,12,13,14,16
+2026-07-01,1,6,7,10,12,18,22
+2026-06-30,2,4,6,14,16,20,24
+2026-06-29,13,14,15,17,18,23,24
+2026-06-28,4,6,7,12,17,18,21
+2026-06-27,3,5,7,8,11,15,22
+2026-06-26,1,8,9,10,13,17,18
+2026-06-25,8,9,11,12,16,17,21
+2026-06-24,5,9,10,11,17,22,24`;
+
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab,.panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');$(b.dataset.tab).classList.add('active')});
+function save(){localStorage.setItem('mr-v2',JSON.stringify({maxN:$('maxN').value,drawSize:$('drawSize').value,roundSize:$('roundSize').value,freqWindow:$('freqWindow').value,draws:$('draws').value,candCount:$('candCount').value,comboCount:$('comboCount').value,minOdd:$('minOdd').value,maxOdd:$('maxOdd').value}))}
+function load(){try{let s=JSON.parse(localStorage.getItem('mr-v2')||'{}');Object.entries(s).forEach(([k,v])=>{if($(k))$(k).value=v})}catch{}if(!$('draws').value.trim())$('draws').value=sample}
+['maxN','drawSize','roundSize','freqWindow','draws','candCount','comboCount','minOdd','maxOdd'].forEach(id=>$(id).onchange=save);
+$('sample').onclick=()=>{$('draws').value=sample;save()};$('clear').onclick=()=>{$('draws').value='';$('status').textContent='';save()};
+function parse(){let m=+$('maxN').value,k=+$('drawSize').value,rows=[],err=[];$('draws').value.split(/\n+/).map(x=>x.trim()).filter(Boolean).forEach((line,i)=>{let p=line.split(/[;,\t ]+/).filter(Boolean),d=/^\d{4}-\d{2}-\d{2}$/.test(p[0])?p.shift():`Рядок ${i+1}`,n=p.map(Number);if(n.length!==k)return err.push(`Рядок ${i+1}: потрібно ${k} чисел`);if(n.some(x=>!Number.isInteger(x)||x<1||x>m))return err.push(`Рядок ${i+1}: число поза 1–${m}`);if(new Set(n).size!==n.length)return err.push(`Рядок ${i+1}: дублікати`);rows.push({date:d,n:[...n].sort((a,b)=>a-b)})});return{rows,err}}
+function comb(a,k){let o=[];function r(s,c){if(c.length===k)return o.push([...c]);for(let i=s;i<=a.length-(k-c.length);i++){c.push(a[i]);r(i+1,c);c.pop()}}r(0,[]);return o}
+$('analyze').onclick=()=>{let {rows,err}=parse(),m=+$('maxN').value,k=+$('drawSize').value,r=+$('roundSize').value,w=+$('freqWindow').value;if(err.length)return $('status').textContent=err.slice(0,4).join(' · ');if(rows.length<r)return $('status').textContent=`Потрібно мінімум ${r} тиражі`;let rc=Array(m+1).fill(0),fq=Array(m+1).fill(0),gap=Array(m+1).fill(rows.length);rows.slice(0,r).forEach(x=>x.n.forEach(n=>rc[n]++));rows.slice(0,w).forEach(x=>x.n.forEach(n=>fq[n]++));for(let n=1;n<=m;n++){let i=rows.findIndex(x=>x.n.includes(n));gap[n]=i<0?rows.length:i}let cats={miss:0,single:0,two:0,three:0};for(let n=1;n<=m;n++){if(!rc[n])cats.miss++;else if(rc[n]===1)cats.single++;else if(rc[n]===2)cats.two++;else cats.three++}let pm=new Map(),cm=new Map();rows.slice(0,30).forEach(x=>comb(x.n,2).forEach(p=>{let z=p.join('-');pm.set(z,(pm.get(z)||0)+1);if(p[1]===p[0]+1)cm.set(z,(cm.get(z)||0)+1)}));let avg=Math.min(w,rows.length)*k/m,stats=[];for(let n=1;n<=m;n++){let s=50,why=[];if(rc[n]===0){s+=14;why.push('не було у раунді')}if(rc[n]===1){s+=8;why.push('single')}if(rc[n]===2){s+=4;why.push('two')}if(rc[n]>=3){s-=7;why.push('three+')}s+=Math.min(15,gap[n]*2.2);if(gap[n]>=3)why.push(`пауза ${gap[n]}`);let d=fq[n]-avg;if(d<0){s+=Math.min(8,-d*1.5);why.push('нижче середньої частоти')}if(d>2){s-=Math.min(7,d);why.push('вище середньої частоти')}if(cm.has(`${n-1}-${n}`)||cm.has(`${n}-${n+1}`)){s+=4;why.push('сусідня пара')}stats.push({n,c:rc[n],f:fq[n],g:gap[n],s:Math.max(0,Math.min(100,Math.round(s))),why})}stats.sort((a,b)=>b.s-a.s||a.n-b.n);let unique=m-cats.miss,expected=m*2/3,dev=Math.min(100,Math.round(Math.abs(unique-expected)/expected*140));A={rows,m,k,r,w,cats,unique,expected,dev,stats,pm,cm};render();$('status').textContent=`Готово: ${rows.length} тиражів`;save();document.querySelector('[data-tab="stats"]').click()};
+function render(){let a=A;$('badge').textContent=`Deviation ${a.dev}/100 · ${a.unique} унікальних чисел`;$('cards').innerHTML=[['Унікальні',a.unique,`орієнтир 2/3: ${a.expected.toFixed(1)}`],['Не було',a.cats.miss,'червоні'],['Singles',a.cats.single,'зелені'],['Twos / Three+',`${a.cats.two} / ${a.cats.three}`,'сині / помаранчеві']].map(x=>`<div class="card"><div class="muted">${x[0]}</div><div class="big">${x[1]}</div><div class="muted">${x[2]}</div></div>`).join('');$('numBody').innerHTML=a.stats.map(x=>{let c=x.c===0?['Не було','red']:x.c===1?['Single','green']:x.c===2?['Two','blue']:['Three+','orange'];return`<tr><td class="num">${x.n}</td><td class="${c[1]}">${c[0]}</td><td>${x.c}</td><td>${x.f}</td><td>${x.g}</td><td><strong>${x.s}</strong></td><td>${x.why.slice(0,3).join(', ')}</td></tr>`}).join('');$('pairs').innerHTML=[...a.pm.entries()].sort((x,y)=>y[1]-x[1]).slice(0,10).map(x=>`${x[0]}: <strong>${x[1]}</strong><br>`).join('');$('cons').innerHTML=[...a.cm.entries()].sort((x,y)=>y[1]-x[1]).slice(0,10).map(x=>`${x[0]}: <strong>${x[1]}</strong><br>`).join('')||'Немає'}
+
+function coreStats(core,rows,win){let part=rows.slice(0,Math.min(win,rows.length)),hits=[];part.forEach((d,i)=>{if(core.every(n=>d.n.includes(n)))hits.push(i)});return{freq:hits.length,gap:hits.length?hits[0]:part.length}}
+function renderSelectedCore(){$('selectedCore').innerHTML=selectedCore.map(n=>`<span class="chip" style="background:#b58b18">${n}</span>`).join('')||'<span class="muted">Ядро не вибране</span>'}
+window.pickCore=i=>{selectedCore=[...coreResults[i].c];renderSelectedCore()}
+$('findCores').onclick=()=>{if(!A)return $('coreList').innerHTML='<p>Спочатку проведіть аналіз.</p>';let size=+$('coreSize').value,count=+$('coreCount').value,win=+$('coreWindow').value,min=+$('coreMinFreq').value,scoreMap=new Map(A.stats.map(x=>[x.n,x.s])),universe=[...Array(A.m)].map((_,i)=>i+1);coreResults=comb(universe,size).map(c=>{let x=coreStats(c,A.rows,win);if(x.freq<min)return null;let avg=c.reduce((q,n)=>q+scoreMap.get(n),0)/c.length;let score=Math.round((avg*.55+Math.min(25,x.gap*1.8)+Math.min(20,x.freq*3))*10)/10;return{c,f:x.freq,g:x.gap,s:score}}).filter(Boolean).sort((a,b)=>b.s-a.s||b.g-a.g).slice(0,count);$('coreList').innerHTML=coreResults.map((x,i)=>`<div class="combo"><div><strong>${x.c.join(' · ')}</strong><div class="muted small">появ: ${x.f} · пауза: ${x.g}</div></div><div><span class="muted">бал ${x.s}</span> <button onclick="pickCore(${i})">Вибрати</button></div></div>`).join('')||'<p>Ядер за вибраними умовами не знайдено.</p>'};
+$('selectTopCore').onclick=()=>{if(!coreResults.length)$('findCores').click();if(coreResults.length)pickCore(0)};
+
+$('generate').onclick=()=>{if(!A)return $('combos').innerHTML='<p>Спочатку проведіть аналіз.</p>';let n=Math.min(A.m,Math.max(A.k,+$('candCount').value)),cnt=+$('comboCount').value,min=+$('minOdd').value,max=+$('maxOdd').value,p=A.stats.slice(0,n).map(x=>x.n);selectedCore.forEach(x=>{if(!p.includes(x))p.push(x)});p=[...new Set(p)].sort((a,b)=>a-b);$('pool').innerHTML=p.map(x=>`<span class="chip">${x}</span>`).join('');let sm=new Map(A.stats.map(x=>[x.n,x.s]));let cs=comb(p,A.k).filter(c=>{let o=c.filter(x=>x%2).length;return o>=min&&o<=max&&(!selectedCore.length||selectedCore.every(n=>c.includes(n)))}).map(c=>({c,s:Math.round(c.reduce((q,x)=>q+sm.get(x),0)/c.length*10)/10})).sort((x,y)=>y.s-x.s).slice(0,cnt);$('combos').innerHTML=cs.map((x,i)=>`<div class="combo"><div>#${i+1} <strong>${x.c.join(' · ')}</strong></div><span class="muted">бал ${x.s}</span></div>`).join('')};
+$('copy').onclick=async()=>{let t=[...document.querySelectorAll('.combo strong')].map(x=>x.textContent).join('\n');if(t){await navigator.clipboard.writeText(t);$('copy').textContent='Скопійовано';setTimeout(()=>$('copy').textContent='Копіювати',1200)}};
+load();
+</script>
+</body></html>
