@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lottery Analysis Lab — Mini Renta</title><link rel="stylesheet" href="style.css"></head>
+<body><header><div><h1>Lottery Analysis Lab</h1><p>Mini Renta — перевірений стартовий архів</p></div><div class="badge">Release 1.1</div></header>
+<main>
+<section class="notice"><strong>Дані:</strong> 100 тиражів за 08.04.2026–16.07.2026. Джерело: Milionář. Нові результати можна додавати вручну.</section>
+<section class="stats"><div><b id="count">0</b><span>тиражів</span></div><div><b id="from">—</b><span>від</span></div><div><b id="to">—</b><span>до</span></div><div><b id="status">—</b><span>перевірка</span></div></section>
+<section class="card"><h2>Додати новий тираж</h2><div class="add-grid"><label>Дата<input id="newDate" type="date"></label><label>7 чисел<input id="newNumbers" placeholder="Напр.: 1 4 6 10 12 14 21"></label><button id="addDraw">Додати</button></div><p id="addMessage" class="message"></p></section>
+<section class="card"><div class="section-head"><h2>Архів</h2><div class="actions"><button id="downloadCsv">Завантажити CSV</button><label class="file-btn">Імпортувати CSV<input id="fileInput" type="file" accept=".csv,text/csv"></label><button id="reset" class="secondary">Повернути стартові 100</button></div></div>
+<div class="table-wrap"><table><thead><tr><th>№</th><th>Дата</th><th>Числа</th></tr></thead><tbody id="rows"></tbody></table></div></section>
+<section class="card"><h2>Перевірка даних</h2><div id="validation"></div></section>
+</main><script src="app.js"></script></body></html>
