@@ -1,0 +1,1698 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lottery Analysis Lab 2.9</title>
+<style>
+:root{
+  --bg:#0b1020;--panel:#111a2e;--panel2:#17233d;--line:#2b3a59;
+  --text:#eef4ff;--muted:#9fb0cb;--accent:#52c7ff;--red:#ef4444;
+  --green:#22c55e;--blue:#3b82f6;--orange:#f59e0b;
+}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(135deg,#08101f,#11182b);color:var(--text);
+font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+.wrap{max-width:1280px;margin:auto;padding:22px}
+h1{margin:0;font-size:clamp(28px,5vw,44px)}
+.sub{color:var(--muted);margin:6px 0 18px}
+.card{background:rgba(17,26,46,.94);border:1px solid var(--line);border-radius:16px;
+padding:16px;box-shadow:0 14px 36px rgba(0,0,0,.22)}
+.grid{display:grid;gap:14px}
+.stats{grid-template-columns:repeat(auto-fit,minmax(165px,1fr));margin-bottom:14px}
+.stat .label{color:var(--muted);font-size:12px}
+.stat .value{font-size:27px;font-weight:800;margin-top:4px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+.tab{border:1px solid var(--line);background:var(--panel2);color:var(--text);
+padding:10px 14px;border-radius:10px;cursor:pointer}
+.tab.active{background:var(--accent);color:#06253a;border-color:transparent;font-weight:800}
+.panel{display:none}.panel.active{display:block}
+.toolbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin:12px 0}
+button,.file-label,input,select{font:inherit;border-radius:10px;border:1px solid var(--line)}
+button,.file-label{padding:10px 13px;background:var(--panel2);color:var(--text);cursor:pointer}
+button.primary{background:var(--accent);color:#052638;border-color:transparent;font-weight:800}
+button.danger{background:#451a1d}
+input,select{padding:10px;background:#091225;color:var(--text)}
+input[type=file]{display:none}
+#status{padding:11px 13px;border-radius:10px;background:#0d1729;color:var(--muted);margin-top:10px}
+#status.ok{border-left:4px solid var(--green)}
+#status.warn{border-left:4px solid var(--orange)}
+#status.bad{border-left:4px solid var(--red)}
+.add-grid{display:grid;grid-template-columns:180px minmax(280px,1fr) auto;gap:8px;align-items:end}
+.number-inputs{display:grid;grid-template-columns:repeat(auto-fit,minmax(58px,1fr));gap:8px}
+.manager{margin:14px 0}.manager-grid{display:grid;grid-template-columns:minmax(220px,1fr) repeat(3,minmax(120px,180px)) auto;gap:9px;align-items:end}
+.book-badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#16324d;color:#9bdcff;font-size:12px;font-weight:800}
+.lab-badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#3b2b16;color:#fcd34d;font-size:12px;font-weight:800}
+.field label{display:block;color:var(--muted);font-size:12px;margin-bottom:5px}
+.field input{width:100%;min-width:0}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:13px;max-height:580px}
+table{width:100%;border-collapse:collapse;min-width:720px;background:#091225}
+th,td{padding:9px 10px;border-bottom:1px solid #24324d;text-align:center}
+th{position:sticky;top:0;background:#16223b;z-index:2}
+td:first-child,th:first-child{text-align:left}
+.ball{display:inline-grid;place-items:center;width:31px;height:31px;border-radius:50%;
+font-weight:800;margin:2px;background:#dce6f5;color:#111827}
+.ball.green{background:var(--green);color:white}
+.ball.blue{background:var(--blue);color:white}
+.ball.orange{background:var(--orange);color:#251400}
+.ball.red{background:var(--red);color:white}
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin:10px 0;color:var(--muted);font-size:13px}
+.dot{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:5px}
+.round-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:14px}
+.round-card h3{margin:0 0 4px}
+.small{font-size:13px;color:var(--muted)}
+.category-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:12px}
+.category{background:#0b1528;border:1px solid var(--line);border-radius:12px;padding:12px}
+.category strong{display:block;margin-bottom:8px}
+.number-list{display:flex;gap:6px;flex-wrap:wrap}
+.pill{padding:5px 8px;border-radius:999px;font-weight:700;font-size:13px}
+.pill.red{background:#4a171a;color:#fecaca}
+.pill.green{background:#123d24;color:#bbf7d0}
+.pill.blue{background:#142d59;color:#bfdbfe}
+.pill.orange{background:#4a3010;color:#fde68a}
+.analysis-grid{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.metric{background:#0b1528;border:1px solid var(--line);border-radius:12px;padding:13px}
+.metric b{font-size:24px;display:block;margin-top:4px}
+.structure{font-size:20px;font-weight:800;letter-spacing:.3px}
+.note{color:var(--muted);line-height:1.5;font-size:13px}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+@media(max-width:900px){
+ .manager-grid{grid-template-columns:1fr 1fr}.manager-grid .wide{grid-column:1/-1}
+ .add-grid{grid-template-columns:1fr}
+ .date-field,.add-btn{grid-column:1/-1}
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1>Lottery Analysis Lab 2.9</h1>
+  <div class="sub">Мультилотерейна лабораторія: окремий архів і аналіз для кожної гри</div>
+
+
+  <section class="card manager">
+    <div class="manager-grid">
+      <div class="field wide">
+        <label>Активна лотерея</label>
+        <select id="lotterySelect"></select>
+      </div>
+      <div class="field"><label>Макс. число</label><input id="lotteryMax" type="number" min="3" max="99" value="24"></div>
+      <div class="field"><label>Чисел у тиражі</label><input id="lotteryPick" type="number" min="2" max="20" value="7"></div>
+      <div class="field"><label>Тиражів у Round</label><input id="lotteryRoundSize" type="number" min="2" max="50" value="8"></div>
+      <button id="newLotteryBtn" class="primary">Створити</button>
+    </div>
+    <div class="toolbar">
+      <input id="newLotteryName" class="wide" type="text" placeholder="Назва нової лотереї">
+      <button id="renameLotteryBtn">Перейменувати</button>
+      <button id="deleteLotteryBtn" class="danger">Видалити профіль</button>
+    </div>
+    <div class="note">
+      Дані різних лотерей зберігаються окремо. 
+      <span class="book-badge">Book Method</span> — правило з книги.
+      <span class="lab-badge">Lab Method</span> — наше прозоре доповнення.
+    </div>
+  </section>
+
+  <section class="grid stats">
+    <div class="card stat"><div class="label">Тиражів</div><div id="drawCount" class="value">0</div></div>
+    <div class="card stat"><div class="label">Остання дата</div><div id="latestDate" class="value">—</div></div>
+    <div class="card stat"><div class="label">Round 1: унікальних</div><div id="uniqueCount" class="value">—</div></div>
+    <div class="card stat"><div class="label">Структура Round 1</div><div id="structureTop" class="value" style="font-size:18px">—</div></div>
+  </section>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="archive">Архів</button>
+    <button class="tab" data-tab="analysis">Аналіз Round 1</button>
+    <button class="tab" data-tab="rounds">Rounds 1–5</button>
+    <button class="tab" data-tab="pairs">Пари</button>
+    <button class="tab" data-tab="triplets">Трійки</button>
+    <button class="tab" data-tab="core">Core Builder</button>
+    <button class="tab" data-tab="templates">Templates</button>
+    <button class="tab" data-tab="consecutive">Consecutive</button>
+    <button class="tab" data-tab="twoThirds">2/3 Rule</button>
+    <button class="tab" data-tab="counter">Counter</button>
+  </div>
+
+  <section id="archive" class="panel active card">
+    <h2>Архів тиражів</h2>
+    <div class="add-grid">
+      <div class="field date-field"><label>Дата</label><input id="dateInput" type="date"></div>
+      <div class="number-inputs" id="numberInputs"></div>
+      <button id="addBtn" class="primary add-btn">Додати</button>
+    </div>
+
+    <div class="toolbar">
+      <button id="reloadBtn">Зчитати CSV заново</button>
+      <label class="file-label" for="fileInput">Імпортувати CSV</label>
+      <input id="fileInput" type="file" accept=".csv,text/csv">
+      <button id="exportBtn">Експортувати CSV</button>
+      <button id="clearBtn" class="danger">Скинути локальні зміни</button>
+    </div>
+    <div id="status">Запуск…</div>
+
+    <div class="table-wrap" style="margin-top:14px">
+      <table>
+        <thead><tr><th>Дата</th><th>Числа</th></tr></thead>
+        <tbody id="drawRows"></tbody>
+      </table>
+      <div id="emptyArchive" class="empty" hidden>Немає тиражів.</div>
+    </div>
+  </section>
+
+  <section id="analysis" class="panel card">
+    <h2>Аналіз поточного Round 1</h2>
+    <div class="note">Round 1 — вісім найновіших тиражів. Категорія числа визначається за кількістю появ у цих восьми тиражах.</div>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--red)"></i>Red — Missing</span>
+      <span><i class="dot" style="background:var(--green)"></i>Green — Single</span>
+      <span><i class="dot" style="background:var(--blue)"></i>Blue — Two</span>
+      <span><i class="dot" style="background:var(--orange)"></i>Orange — Three+</span>
+    </div>
+
+    <div class="grid analysis-grid">
+      <div class="metric"><span class="small">Унікальні числа</span><b id="aUnique">—</b></div>
+      <div class="metric"><span class="small">Missing</span><b id="aMissing">—</b></div>
+      <div class="metric"><span class="small">Singles</span><b id="aSingles">—</b></div>
+      <div class="metric"><span class="small">Twos</span><b id="aTwos">—</b></div>
+      <div class="metric"><span class="small">Threes+</span><b id="aThrees">—</b></div>
+    </div>
+
+    <div class="category-grid">
+      <div class="category"><strong style="color:#fca5a5">Red / Missing</strong><div id="missingList" class="number-list"></div></div>
+      <div class="category"><strong style="color:#86efac">Green / Singles</strong><div id="singleList" class="number-list"></div></div>
+      <div class="category"><strong style="color:#93c5fd">Blue / Twos</strong><div id="twoList" class="number-list"></div></div>
+      <div class="category"><strong style="color:#fcd34d">Orange / Threes+</strong><div id="threeList" class="number-list"></div></div>
+    </div>
+
+    <div class="card" style="margin-top:14px;background:#0b1528">
+      <div class="small">Структура поточного стану Round 1</div>
+      <div id="structureText" class="structure">—</div>
+      <div id="historicalCompare" class="note" style="margin-top:8px"></div>
+    </div>
+
+    <div class="table-wrap" style="margin-top:14px;max-height:none">
+      <table>
+        <thead><tr><th>Дата</th><th>Числа з кольорами категорій</th></tr></thead>
+        <tbody id="analysisRows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="rounds" class="panel">
+    <div id="roundCards" class="round-grid"></div>
+  </section>
+
+  <section id="pairs" class="panel card">
+    <h2>Pair Analyzer <span class="book-badge">Book Method</span></h2>
+    <div class="toolbar">
+      <label for="pairRound" class="small">Раунд:</label>
+      <select id="pairRound">
+        <option value="0">Round 1</option>
+        <option value="1">Round 2</option>
+        <option value="2">Round 3</option>
+        <option value="3">Round 4</option>
+        <option value="4">Round 5</option>
+      </select>
+      <label for="pairMin" class="small">Мінімальна частота:</label>
+      <select id="pairMin">
+        <option value="1">1+</option>
+        <option value="2" selected>2+</option>
+        <option value="3">3+</option>
+        <option value="4">4+</option>
+      </select>
+    </div>
+
+    <div class="grid analysis-grid">
+      <div class="metric"><span class="small">Унікальних пар</span><b id="pairUnique">—</b></div>
+      <div class="metric"><span class="small">Пар 2+</span><b id="pairRepeat">—</b></div>
+      <div class="metric"><span class="small">Макс. частота</span><b id="pairMax">—</b></div>
+      <div class="metric"><span class="small">Тиражів у раунді</span><b id="pairDraws">—</b></div>
+    </div>
+
+    <div class="table-wrap" style="margin-top:14px;max-height:620px">
+      <table>
+        <thead>
+          <tr>
+            <th>Пара</th>
+            <th>Частота в раунді</th>
+            <th>Остання поява</th>
+            <th>Тиражів тому</th>
+          </tr>
+        </thead>
+        <tbody id="pairRows"></tbody>
+      </table>
+      <div id="pairEmpty" class="empty" hidden>Немає пар за вибраним фільтром.</div>
+    </div>
+  </section>
+
+
+  <section id="triplets" class="panel card">
+    <h2>Triplet Analyzer <span class="book-badge">Book Method</span></h2>
+    <div class="toolbar">
+      <label for="tripletRound" class="small">Раунд:</label>
+      <select id="tripletRound">
+        <option value="0">Round 1</option>
+        <option value="1">Round 2</option>
+        <option value="2">Round 3</option>
+        <option value="3">Round 4</option>
+        <option value="4">Round 5</option>
+      </select>
+      <label for="tripletMin" class="small">Мінімальна частота:</label>
+      <select id="tripletMin">
+        <option value="1">1+</option>
+        <option value="2" selected>2+</option>
+        <option value="3">3+</option>
+        <option value="4">4+</option>
+      </select>
+    </div>
+
+    <div class="grid analysis-grid">
+      <div class="metric"><span class="small">Унікальних трійок</span><b id="tripletUnique">—</b></div>
+      <div class="metric"><span class="small">Трійок 2+</span><b id="tripletRepeat">—</b></div>
+      <div class="metric"><span class="small">Макс. частота</span><b id="tripletMax">—</b></div>
+      <div class="metric"><span class="small">Тиражів у раунді</span><b id="tripletDraws">—</b></div>
+    </div>
+
+    <div class="table-wrap" style="margin-top:14px;max-height:620px">
+      <table>
+        <thead><tr><th>Трійка</th><th>Частота в раунді</th><th>Остання поява</th><th>Тиражів тому</th></tr></thead>
+        <tbody id="tripletRows"></tbody>
+      </table>
+      <div id="tripletEmpty" class="empty" hidden>Немає трійок за вибраним фільтром.</div>
+    </div>
+  </section>
+
+
+  <section id="core" class="panel card">
+    <h2>Core Builder <span class="lab-badge">Lab Method</span></h2>
+    <p class="small">
+      Прозорий рейтинговий модуль. Це робоча евристика лабораторії, а не гарантія виграшу:
+      <b>Score = частота × 3 + сила повторних пар × 2 + сила повторних трійок × 3</b>.
+    </p>
+
+    <div class="toolbar">
+      <label for="coreRound" class="small">Раунд:</label>
+      <select id="coreRound">
+        <option value="0">Round 1</option>
+        <option value="1">Round 2</option>
+        <option value="2">Round 3</option>
+        <option value="3">Round 4</option>
+        <option value="4">Round 5</option>
+      </select>
+
+      <label for="coreSize" class="small">Core:</label>
+      <select id="coreSize">
+        <option value="8">8 чисел</option>
+        <option value="10">10 чисел</option>
+        <option value="12" selected>12 чисел</option>
+        <option value="14">14 чисел</option>
+        <option value="16">16 чисел</option>
+      </select>
+
+      <label for="superCoreSize" class="small">Super Core:</label>
+      <select id="superCoreSize">
+        <option value="5">5 чисел</option>
+        <option value="6">6 чисел</option>
+        <option value="7" selected>7 чисел</option>
+        <option value="8">8 чисел</option>
+      </select>
+    </div>
+
+    <div class="category-grid" style="margin-top:14px">
+      <div class="category">
+        <strong>Core</strong>
+        <div id="coreList" class="number-list"></div>
+      </div>
+      <div class="category">
+        <strong>Super Core</strong>
+        <div id="superCoreList" class="number-list"></div>
+      </div>
+    </div>
+
+    <div class="grid analysis-grid" style="margin-top:14px">
+      <div class="metric"><span class="small">Лідер</span><b id="coreLeader">—</b></div>
+      <div class="metric"><span class="small">Найвищий Score</span><b id="coreMaxScore">—</b></div>
+      <div class="metric"><span class="small">Повторних пар</span><b id="corePairCount">—</b></div>
+      <div class="metric"><span class="small">Повторних трійок</span><b id="coreTripletCount">—</b></div>
+    </div>
+
+    <div class="table-wrap" style="margin-top:14px;max-height:680px">
+      <table>
+        <thead>
+          <tr>
+            <th>Ранг</th>
+            <th>Число</th>
+            <th>Категорія</th>
+            <th>Частота</th>
+            <th>Пари</th>
+            <th>Трійки</th>
+            <th>Core Score</th>
+            <th>Статус</th>
+          </tr>
+        </thead>
+        <tbody id="coreRows"></tbody>
+      </table>
+      <div id="coreEmpty" class="empty" hidden>Немає даних для побудови Core.</div>
+    </div>
+  </section>
+
+
+  <section id="templates" class="panel card">
+    <h2>Template Builder <span class="book-badge">Book Method</span></h2>
+    <p class="small">
+      Шаблон описує, скільки чисел майбутнього тиражу береться з категорій попереднього Round:
+      Missing, Singles, Twos і Threes+. Історична таблиця перевіряє такі структури лише на реальних тиражах архіву.
+    </p>
+
+    <div class="toolbar">
+      <label for="templateRound" class="small">Базовий Round:</label>
+      <select id="templateRound">
+        <option value="0">Round 1</option>
+        <option value="1">Round 2</option>
+        <option value="2">Round 3</option>
+        <option value="3">Round 4</option>
+        <option value="4">Round 5</option>
+      </select>
+    </div>
+
+    <div class="grid analysis-grid">
+      <div class="metric"><span class="small">Missing у базі</span><b id="templateMissingSize">—</b></div>
+      <div class="metric"><span class="small">Singles у базі</span><b id="templateSinglesSize">—</b></div>
+      <div class="metric"><span class="small">Twos у базі</span><b id="templateTwosSize">—</b></div>
+      <div class="metric"><span class="small">Threes+ у базі</span><b id="templateThreesSize">—</b></div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h3>Конструктор шаблону</h3>
+      <div class="toolbar">
+        <label class="small">M <input id="templateM" type="number" min="0" value="1" style="width:72px"></label>
+        <label class="small">S <input id="templateS" type="number" min="0" value="2" style="width:72px"></label>
+        <label class="small">T <input id="templateT" type="number" min="0" value="2" style="width:72px"></label>
+        <label class="small">Th+ <input id="templateTh" type="number" min="0" value="2" style="width:72px"></label>
+      </div>
+      <div class="grid analysis-grid">
+        <div class="metric"><span class="small">Шаблон</span><b id="templateCode">—</b></div>
+        <div class="metric"><span class="small">Всього чисел</span><b id="templateTotal">—</b></div>
+        <div class="metric"><span class="small">Можливих комбінацій</span><b id="templateCombinations">—</b></div>
+        <div class="metric"><span class="small">Статус</span><b id="templateStatus">—</b></div>
+      </div>
+      <p id="templateExplanation" class="note"></p>
+    </div>
+
+    <div class="table-wrap" style="margin-top:14px;max-height:620px">
+      <table>
+        <thead>
+          <tr>
+            <th>Історичний шаблон</th>
+            <th>Випадків</th>
+            <th>Частка</th>
+            <th>Останній випадок</th>
+            <th>Комбінацій у відповідній базі</th>
+          </tr>
+        </thead>
+        <tbody id="templateRows"></tbody>
+      </table>
+      <div id="templateEmpty" class="empty" hidden>Недостатньо повних раундів і наступних тиражів для історичного аналізу.</div>
+    </div>
+  </section>
+
+
+  <section id="consecutive" class="panel card">
+    <h2>Consecutive Pair Filter <span class="book-badge">Book Method</span></h2>
+    <p class="small">
+      Модуль аналізує сусідні числа виду n–(n+1) у реальних історичних тиражах.
+      Фільтр можна використати пізніше в генераторі кандидатів.
+    </p>
+
+    <div class="toolbar">
+      <label for="consecutiveRound" class="small">Період:</label>
+      <select id="consecutiveRound">
+        <option value="all">Увесь архів</option>
+        <option value="0">Round 1</option>
+        <option value="1">Round 2</option>
+        <option value="2">Round 3</option>
+        <option value="3">Round 4</option>
+        <option value="4">Round 5</option>
+      </select>
+
+      <label for="consecutiveMin" class="small">Мін. пар у кандидата:</label>
+      <input id="consecutiveMin" type="number" min="0" max="10" value="0" style="width:80px">
+
+      <label for="consecutiveMax" class="small">Макс. пар у кандидата:</label>
+      <input id="consecutiveMax" type="number" min="0" max="10" value="1" style="width:80px">
+    </div>
+
+    <div class="grid analysis-grid">
+      <div class="metric"><span class="small">Тиражів у вибірці</span><b id="consecutiveDraws">—</b></div>
+      <div class="metric"><span class="small">Тиражів із послідовною парою</span><b id="consecutiveWithPair">—</b></div>
+      <div class="metric"><span class="small">Частка</span><b id="consecutiveShare">—</b></div>
+      <div class="metric"><span class="small">Найчастіша пара</span><b id="consecutiveTopPair">—</b></div>
+    </div>
+
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-top:14px">
+      <div class="card">
+        <h3>Розподіл за кількістю пар</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Пар у тиражі</th><th>Тиражів</th><th>Частка</th></tr></thead>
+            <tbody id="consecutiveDistributionRows"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Історичні послідовні пари</h3>
+        <div class="table-wrap" style="max-height:420px">
+          <table>
+            <thead><tr><th>Пара</th><th>Частота</th><th>Останній випадок</th><th>Тиражів тому</th></tr></thead>
+            <tbody id="consecutivePairRows"></tbody>
+          </table>
+          <div id="consecutiveEmpty" class="empty" hidden>У вибраному періоді немає послідовних пар.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h3>Оцінка фільтра</h3>
+      <div class="grid analysis-grid">
+        <div class="metric"><span class="small">Усі комбінації</span><b id="consecutiveAllCombinations">—</b></div>
+        <div class="metric"><span class="small">Після фільтра</span><b id="consecutiveFilteredCombinations">—</b></div>
+        <div class="metric"><span class="small">Залишається</span><b id="consecutiveRemainingShare">—</b></div>
+        <div class="metric"><span class="small">Історично пройшли</span><b id="consecutiveHistoricalPass">—</b></div>
+      </div>
+      <p id="consecutiveExplanation" class="note"></p>
+    </div>
+  </section>
+
+
+  <section id="twoThirds" class="panel card">
+    <h2>2/3 Rule <span class="book-badge">Book Method</span></h2>
+    <p class="small">
+      Реалізація відтворює дві перевірки, прямо показані в книзі:
+      появу нових унікальних чисел між послідовними Round та розподіл
+      Singles / Twos / Threes+ всередині одного ковзного Round.
+    </p>
+
+    <div class="toolbar">
+      <label for="twoThirdsRound" class="small">Поточний Round:</label>
+      <select id="twoThirdsRound">
+        <option value="0">Round 1</option>
+        <option value="1">Round 2</option>
+        <option value="2">Round 3</option>
+        <option value="3">Round 4</option>
+        <option value="4">Round 5</option>
+      </select>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h3>Унікальні числа між Round</h3>
+      <p class="note">
+        Теоретичний орієнтир: у першому Round з'являється приблизно 2/3 ігрового поля;
+        у наступному — приблизно 2/3 чисел, які ще не з'являлися, і так далі.
+      </p>
+      <div class="grid analysis-grid">
+        <div class="metric"><span class="small">Поле лотереї</span><b id="twoThirdsFieldSize">—</b></div>
+        <div class="metric"><span class="small">Унікальних у Round</span><b id="twoThirdsUniqueActual">—</b></div>
+        <div class="metric"><span class="small">Теоретично для Round 1</span><b id="twoThirdsUniqueExpected">—</b></div>
+        <div class="metric"><span class="small">Відхилення</span><b id="twoThirdsUniqueDeviation">—</b></div>
+      </div>
+
+      <div class="table-wrap" style="margin-top:14px">
+        <table>
+          <thead>
+            <tr>
+              <th>Етап</th>
+              <th>Залишок перед етапом</th>
+              <th>Орієнтир 2/3</th>
+              <th>Фактично нових</th>
+              <th>Накопичено</th>
+              <th>Залишилося</th>
+              <th>Відхилення</th>
+            </tr>
+          </thead>
+          <tbody id="twoThirdsStageRows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h3>Розподіл усередині Round</h3>
+      <p class="note">
+        За прикладом книги: приблизно 2/3 унікальних чисел мають бути Singles;
+        приблизно 2/3 від решти — Twos; залишок — Threes+.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Категорія</th>
+              <th>Теоретично</th>
+              <th>Фактично</th>
+              <th>Відхилення</th>
+            </tr>
+          </thead>
+          <tbody id="twoThirdsCategoryRows"></tbody>
+        </table>
+      </div>
+      <p id="twoThirdsCurrentExplanation" class="note"></p>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h3>Ковзна історична перевірка</h3>
+      <p class="note">
+        Як описано в книзі, вікно зміщується на один тираж:
+        найстаріший тираж вилучається, а наступний додається.
+      </p>
+      <div class="grid analysis-grid">
+        <div class="metric"><span class="small">Ковзних вікон</span><b id="twoThirdsWindows">—</b></div>
+        <div class="metric"><span class="small">Сер. |відхилення| Singles</span><b id="twoThirdsAvgSinglesDev">—</b></div>
+        <div class="metric"><span class="small">Сер. |відхилення| Twos</span><b id="twoThirdsAvgTwosDev">—</b></div>
+        <div class="metric"><span class="small">Сер. |відхилення| Threes+</span><b id="twoThirdsAvgThreesDev">—</b></div>
+      </div>
+      <div class="table-wrap" style="margin-top:14px;max-height:560px">
+        <table>
+          <thead>
+            <tr>
+              <th>Період</th>
+              <th>Unique</th>
+              <th>Singles факт / теор.</th>
+              <th>Twos факт / теор.</th>
+              <th>Threes+ факт / теор.</th>
+              <th>Сумарне |відхилення|</th>
+            </tr>
+          </thead>
+          <tbody id="twoThirdsHistoryRows"></tbody>
+        </table>
+        <div id="twoThirdsEmpty" class="empty" hidden>
+          Для ковзної перевірки потрібно щонайменше стільки тиражів, скільки задано в Round.
+        </div>
+      </div>
+    </div>
+
+    <p class="note" style="margin-top:14px">
+      Правило тут використовується як статистичний орієнтир. Воно не визначає конкретні
+      виграшні числа і не є гарантією результату.
+    </p>
+  </section>
+
+
+<section id="counter" class="panel card">
+<h2>Combination Counter <span class="lab-badge">Lab Method</span></h2>
+<p class="note">Модуль показує конвеєр відбору кандидатів. На цьому етапі він обчислює загальну кількість можливих комбінацій та готує основу для Candidate Generator.</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Етап</th><th>Результат</th></tr></thead>
+<tbody id="counterRows"></tbody>
+</table>
+</div>
+</section>
+</main>
+
+
+<script>
+(() => {
+"use strict";
+const PROFILE_STORAGE_KEY="lotteryLabProfilesV25";
+const ACTIVE_PROFILE_KEY="lotteryLabActiveV25";
+const DEFAULT_PROFILE_ID="mini-renta";
+const DEFAULT_PROFILE={
+ id:DEFAULT_PROFILE_ID,
+ name:"Mini Renta",
+ maxNumber:24,
+ numbersPerDraw:7,
+ roundSize:8,
+ csvFile:"mini-renta-history.csv",
+ draws:[]
+};
+let profiles={};
+let activeProfileId=DEFAULT_PROFILE_ID;
+let currentProfile=DEFAULT_PROFILE;
+let CSV_FILE=currentProfile.csvFile;
+let MAX_NUMBER=currentProfile.maxNumber;
+let NUMBERS_PER_DRAW=currentProfile.numbersPerDraw;
+let ROUND_SIZE=currentProfile.roundSize;
+let draws=[];
+
+const $=s=>document.querySelector(s);
+const els={
+ status:$("#status"),drawRows:$("#drawRows"),analysisRows:$("#analysisRows"),
+ roundCards:$("#roundCards"),drawCount:$("#drawCount"),latestDate:$("#latestDate"),
+ uniqueCount:$("#uniqueCount"),structureTop:$("#structureTop"),
+ aUnique:$("#aUnique"),aMissing:$("#aMissing"),aSingles:$("#aSingles"),
+ aTwos:$("#aTwos"),aThrees:$("#aThrees"),missingList:$("#missingList"),
+ singleList:$("#singleList"),twoList:$("#twoList"),threeList:$("#threeList"),
+ structureText:$("#structureText"),historicalCompare:$("#historicalCompare"),
+ date:$("#dateInput"),numberInputs:$("#numberInputs"),
+ emptyArchive:$("#emptyArchive"),
+ pairRound:$("#pairRound"),pairMin:$("#pairMin"),pairRows:$("#pairRows"),
+ pairEmpty:$("#pairEmpty"),pairUnique:$("#pairUnique"),pairRepeat:$("#pairRepeat"),
+ pairMax:$("#pairMax"),pairDraws:$("#pairDraws"),
+ tripletRound:$("#tripletRound"),tripletMin:$("#tripletMin"),tripletRows:$("#tripletRows"),
+ tripletEmpty:$("#tripletEmpty"),tripletUnique:$("#tripletUnique"),tripletRepeat:$("#tripletRepeat"),
+ tripletMax:$("#tripletMax"),tripletDraws:$("#tripletDraws"),
+ coreRound:$("#coreRound"),coreSize:$("#coreSize"),superCoreSize:$("#superCoreSize"),
+ coreList:$("#coreList"),superCoreList:$("#superCoreList"),coreRows:$("#coreRows"),
+ coreEmpty:$("#coreEmpty"),coreLeader:$("#coreLeader"),coreMaxScore:$("#coreMaxScore"),
+ corePairCount:$("#corePairCount"),coreTripletCount:$("#coreTripletCount"),
+ lotterySelect:$("#lotterySelect"),lotteryMax:$("#lotteryMax"),lotteryPick:$("#lotteryPick"),
+ lotteryRoundSize:$("#lotteryRoundSize"),newLotteryName:$("#newLotteryName"),
+ templateRound:$("#templateRound"),templateM:$("#templateM"),templateS:$("#templateS"),
+ templateT:$("#templateT"),templateTh:$("#templateTh"),templateCode:$("#templateCode"),
+ templateTotal:$("#templateTotal"),templateCombinations:$("#templateCombinations"),
+ templateStatus:$("#templateStatus"),templateExplanation:$("#templateExplanation"),
+ templateRows:$("#templateRows"),templateEmpty:$("#templateEmpty"),
+ templateMissingSize:$("#templateMissingSize"),templateSinglesSize:$("#templateSinglesSize"),
+ templateTwosSize:$("#templateTwosSize"),templateThreesSize:$("#templateThreesSize"),
+ consecutiveRound:$("#consecutiveRound"),consecutiveMin:$("#consecutiveMin"),consecutiveMax:$("#consecutiveMax"),
+ consecutiveDraws:$("#consecutiveDraws"),consecutiveWithPair:$("#consecutiveWithPair"),
+ consecutiveShare:$("#consecutiveShare"),consecutiveTopPair:$("#consecutiveTopPair"),
+ consecutiveDistributionRows:$("#consecutiveDistributionRows"),consecutivePairRows:$("#consecutivePairRows"),
+ consecutiveEmpty:$("#consecutiveEmpty"),consecutiveAllCombinations:$("#consecutiveAllCombinations"),
+ consecutiveFilteredCombinations:$("#consecutiveFilteredCombinations"),
+ consecutiveRemainingShare:$("#consecutiveRemainingShare"),
+ consecutiveHistoricalPass:$("#consecutiveHistoricalPass"),
+ consecutiveExplanation:$("#consecutiveExplanation"),
+ twoThirdsRound:$("#twoThirdsRound"),twoThirdsFieldSize:$("#twoThirdsFieldSize"),
+ twoThirdsUniqueActual:$("#twoThirdsUniqueActual"),twoThirdsUniqueExpected:$("#twoThirdsUniqueExpected"),
+ twoThirdsUniqueDeviation:$("#twoThirdsUniqueDeviation"),twoThirdsStageRows:$("#twoThirdsStageRows"),
+ twoThirdsCategoryRows:$("#twoThirdsCategoryRows"),twoThirdsCurrentExplanation:$("#twoThirdsCurrentExplanation"),
+ twoThirdsWindows:$("#twoThirdsWindows"),twoThirdsAvgSinglesDev:$("#twoThirdsAvgSinglesDev"),
+ twoThirdsAvgTwosDev:$("#twoThirdsAvgTwosDev"),twoThirdsAvgThreesDev:$("#twoThirdsAvgThreesDev"),
+ twoThirdsHistoryRows:$("#twoThirdsHistoryRows"),twoThirdsEmpty:$("#twoThirdsEmpty")
+};
+
+
+function slugify(value){
+ return String(value||"lottery").toLowerCase().trim()
+  .normalize("NFKD").replace(/[\u0300-\u036f]/g,"")
+  .replace(/[^a-z0-9а-яіїєґ]+/gi,"-").replace(/^-+|-+$/g,"") || "lottery";
+}
+function cloneDefaultProfile(){return JSON.parse(JSON.stringify(DEFAULT_PROFILE))}
+function loadProfiles(){
+ try{
+  const saved=JSON.parse(localStorage.getItem(PROFILE_STORAGE_KEY)||"null");
+  if(saved&&typeof saved==="object")profiles=saved;
+ }catch(_){profiles={}}
+ if(!profiles[DEFAULT_PROFILE_ID])profiles[DEFAULT_PROFILE_ID]=cloneDefaultProfile();
+ activeProfileId=localStorage.getItem(ACTIVE_PROFILE_KEY)||DEFAULT_PROFILE_ID;
+ if(!profiles[activeProfileId])activeProfileId=DEFAULT_PROFILE_ID;
+}
+function persistProfiles(){
+ profiles[activeProfileId]={
+  ...currentProfile,
+  draws:draws.map(d=>({date:d.date,numbers:[...d.numbers]}))
+ };
+ localStorage.setItem(PROFILE_STORAGE_KEY,JSON.stringify(profiles));
+ localStorage.setItem(ACTIVE_PROFILE_KEY,activeProfileId);
+}
+function applyProfile(profile){
+ currentProfile=profile;
+ CSV_FILE=profile.csvFile||"";
+ MAX_NUMBER=Number(profile.maxNumber);
+ NUMBERS_PER_DRAW=Number(profile.numbersPerDraw);
+ ROUND_SIZE=Number(profile.roundSize);
+ draws=normalize(Array.isArray(profile.draws)?profile.draws:[]);
+ els.lotteryMax.value=MAX_NUMBER;
+ els.lotteryPick.value=NUMBERS_PER_DRAW;
+ els.lotteryRoundSize.value=ROUND_SIZE;
+ renderNumberInputs();
+ updateProfileSelect();
+ render();
+}
+function updateProfileSelect(){
+ els.lotterySelect.innerHTML="";
+ Object.values(profiles).sort((a,b)=>a.name.localeCompare(b.name,"uk")).forEach(p=>{
+  const option=document.createElement("option");
+  option.value=p.id;option.textContent=`${p.name} — ${p.numbersPerDraw}/${p.maxNumber}`;
+  option.selected=p.id===activeProfileId;
+  els.lotterySelect.appendChild(option);
+ });
+}
+function renderNumberInputs(){
+ els.numberInputs.innerHTML="";
+ for(let i=1;i<=NUMBERS_PER_DRAW;i++){
+  const field=document.createElement("div");field.className="field";
+  const label=document.createElement("label");label.textContent=`N${i}`;
+  const input=document.createElement("input");
+  input.className="numInput";input.type="number";input.min="1";input.max=String(MAX_NUMBER);
+  field.append(label,input);els.numberInputs.appendChild(field);
+ }
+}
+function numberInputs(){return [...document.querySelectorAll(".numInput")]}
+function uniqueProfileId(name){
+ const base=slugify(name);let id=base,n=2;
+ while(profiles[id])id=`${base}-${n++}`;
+ return id;
+}
+function switchProfile(id){
+ persistProfiles();
+ activeProfileId=id;
+ localStorage.setItem(ACTIVE_PROFILE_KEY,id);
+ applyProfile(profiles[id]);
+ const hasData=draws.length>0;
+ if(id===DEFAULT_PROFILE_ID&&!hasData)loadCSV();
+ else setStatus(`Активна лотерея: ${currentProfile.name}. Тиражів: ${draws.length}.`,"ok");
+}
+
+function setStatus(text,type=""){els.status.textContent=text;els.status.className=type}
+function validDate(s){return /^\d{4}-\d{2}-\d{2}$/.test(s)&&!Number.isNaN(Date.parse(s+"T00:00:00"))}
+function validateDraw(d){
+ if(!validDate(d.date))return"Некоректна дата";
+ if(!Array.isArray(d.numbers)||d.numbers.length!==NUMBERS_PER_DRAW)return`Має бути ${NUMBERS_PER_DRAW} чисел`;
+ if(d.numbers.some(n=>!Number.isInteger(n)||n<1||n>MAX_NUMBER))return`Числа мають бути від 1 до ${MAX_NUMBER}`;
+ if(new Set(d.numbers).size!==NUMBERS_PER_DRAW)return"Числа не можуть повторюватися";
+ return"";
+}
+function normalize(list){
+ const byDate=new Map();
+ for(const raw of list){
+  const d={date:String(raw.date).trim(),numbers:raw.numbers.map(Number).sort((a,b)=>a-b)};
+  if(!validateDraw(d))byDate.set(d.date,d);
+ }
+ return[...byDate.values()].sort((a,b)=>b.date.localeCompare(a.date));
+}
+function parseCSV(text){
+ const rows=[];
+ const normalized=String(text||"").replace(/\r/g,"\n");
+ const pattern=/(\d{4}-\d{2}-\d{2})\s*[,;]\s*((?:\d+\s*[,;]\s*)+\d+)/g;
+ let match;
+ while((match=pattern.exec(normalized))){
+  const numbers=match[2].split(/[,;]/).map(x=>Number(x.trim())).filter(Number.isFinite);
+  const d={date:match[1],numbers:numbers.slice(0,NUMBERS_PER_DRAW).sort((a,b)=>a-b)};
+  if(!validateDraw(d))rows.push(d);
+ }
+ if(!rows.length){
+  const lines=normalized.split(/\n+/).map(x=>x.trim()).filter(Boolean);
+  for(const line of lines){
+   const parts=line.split(/[,;]/).map(x=>x.trim());
+   const dateIndex=parts.findIndex(validDate);
+   if(dateIndex<0)continue;
+   const numbers=parts.slice(dateIndex+1).map(Number).filter(Number.isFinite).slice(0,NUMBERS_PER_DRAW);
+   const d={date:parts[dateIndex],numbers:numbers.sort((a,b)=>a-b)};
+   if(!validateDraw(d))rows.push(d);
+  }
+ }
+ if(!rows.length)throw new Error(`CSV не містить валідних тиражів формату дата + ${NUMBERS_PER_DRAW} чисел`);
+ return normalize(rows);
+}
+function toCSV(list){return["date,n1,n2,n3,n4,n5,n6,n7",...list.map(d=>[d.date,...d.numbers].join(","))].join("\n")}
+function save(){persistProfiles()}
+
+function roundSlice(index){return draws.slice(index*ROUND_SIZE,(index+1)*ROUND_SIZE)}
+function analyzeRound(round){
+ const freq=Array(MAX_NUMBER+1).fill(0);
+ round.forEach(d=>d.numbers.forEach(n=>freq[n]++));
+ const groups={missing:[],singles:[],twos:[],threes:[]};
+ for(let n=1;n<=MAX_NUMBER;n++){
+  if(freq[n]===0)groups.missing.push(n);
+  else if(freq[n]===1)groups.singles.push(n);
+  else if(freq[n]===2)groups.twos.push(n);
+  else groups.threes.push(n);
+ }
+ return{
+  freq,groups,
+  unique:MAX_NUMBER-groups.missing.length,
+  structure:`${groups.singles.length}S · ${groups.twos.length}T · ${groups.threes.length}Th+`
+ };
+}
+function categoryClass(freq){return freq===1?"green":freq===2?"blue":freq>=3?"orange":""}
+function ball(n,cls=""){
+ const s=document.createElement("span");s.className="ball "+cls;s.textContent=n;return s
+}
+function pill(n,cls){
+ const s=document.createElement("span");s.className="pill "+cls;s.textContent=n;return s
+}
+function fillList(el,nums,cls){
+ el.innerHTML=""; nums.forEach(n=>el.appendChild(pill(n,cls)));
+ if(!nums.length)el.textContent="—";
+}
+function completedRoundAverages(){
+ const items=[];
+ for(let i=0;i+ROUND_SIZE<=draws.length;i+=ROUND_SIZE){
+  const r=draws.slice(i,i+ROUND_SIZE);
+  if(r.length===ROUND_SIZE)items.push(analyzeRound(r));
+ }
+ if(!items.length)return null;
+ const avg=k=>items.reduce((s,a)=>s+a.groups[k].length,0)/items.length;
+ return{count:items.length,missing:avg("missing"),singles:avg("singles"),twos:avg("twos"),threes:avg("threes")};
+}
+
+function renderArchive(){
+ els.drawRows.innerHTML="";
+ draws.forEach(d=>{
+  const tr=document.createElement("tr"),td1=document.createElement("td"),td2=document.createElement("td");
+  td1.textContent=d.date;d.numbers.forEach(n=>td2.appendChild(ball(n)));
+  tr.append(td1,td2);els.drawRows.appendChild(tr);
+ });
+ els.emptyArchive.hidden=draws.length>0;
+ els.drawCount.textContent=draws.length;
+ els.latestDate.textContent=draws[0]?.date||"—";
+}
+
+function renderAnalysis(){
+ const r=roundSlice(0);
+ if(!r.length){
+  ["aUnique","aMissing","aSingles","aTwos","aThrees"].forEach(id=>els[id].textContent="—");
+  return;
+ }
+ const a=analyzeRound(r);
+ els.uniqueCount.textContent=a.unique;
+ els.structureTop.textContent=a.structure;
+ els.aUnique.textContent=a.unique;
+ els.aMissing.textContent=a.groups.missing.length;
+ els.aSingles.textContent=a.groups.singles.length;
+ els.aTwos.textContent=a.groups.twos.length;
+ els.aThrees.textContent=a.groups.threes.length;
+ els.structureText.textContent=a.structure;
+ fillList(els.missingList,a.groups.missing,"red");
+ fillList(els.singleList,a.groups.singles,"green");
+ fillList(els.twoList,a.groups.twos,"blue");
+ fillList(els.threeList,a.groups.threes,"orange");
+
+ const av=completedRoundAverages();
+ els.historicalCompare.textContent=av
+  ? `Середнє за ${av.count} повними раундами архіву: ${av.singles.toFixed(1)} Singles, ${av.twos.toFixed(1)} Twos, ${av.threes.toFixed(1)} Threes+, ${av.missing.toFixed(1)} Missing.`
+  : "Недостатньо даних для історичного порівняння.";
+
+ els.analysisRows.innerHTML="";
+ r.forEach(d=>{
+  const tr=document.createElement("tr"),td1=document.createElement("td"),td2=document.createElement("td");
+  td1.textContent=d.date;
+  d.numbers.forEach(n=>td2.appendChild(ball(n,categoryClass(a.freq[n]))));
+  tr.append(td1,td2);els.analysisRows.appendChild(tr);
+ });
+}
+
+function renderRounds(){
+ els.roundCards.innerHTML="";
+ for(let i=0;i<5;i++){
+  const r=roundSlice(i);
+  const card=document.createElement("section");card.className="card round-card";
+  const h=document.createElement("h3");h.textContent=`Round ${i+1}`;
+  const info=document.createElement("div");info.className="small";
+
+  if(!r.length){
+   info.textContent="Немає даних";
+   card.append(h,info);
+   els.roundCards.appendChild(card);
+   continue;
+  }
+
+  const a=analyzeRound(r);
+  info.textContent=`${r.length} тиражів · ${a.unique} унікальних · ${a.structure}`;
+
+  const summary=document.createElement("div");
+  summary.className="category-grid";
+  summary.style.gridTemplateColumns="repeat(2,minmax(0,1fr))";
+
+  const categories=[
+   ["Missing",a.groups.missing,"red"],
+   ["Singles",a.groups.singles,"green"],
+   ["Twos",a.groups.twos,"blue"],
+   ["Threes+",a.groups.threes,"orange"]
+  ];
+
+  categories.forEach(([title,nums,cls])=>{
+   const box=document.createElement("div");
+   box.className="category";
+   const strong=document.createElement("strong");
+   strong.textContent=`${title}: ${nums.length}`;
+   const list=document.createElement("div");
+   list.className="number-list";
+   nums.forEach(n=>list.appendChild(pill(n,cls)));
+   if(!nums.length)list.textContent="—";
+   box.append(strong,list);
+   summary.appendChild(box);
+  });
+
+  const wrap=document.createElement("div");
+  wrap.className="table-wrap";
+  wrap.style.marginTop="10px";
+  wrap.style.maxHeight="360px";
+
+  const table=document.createElement("table");
+  table.innerHTML="<thead><tr><th>Дата</th><th>Числа</th></tr></thead>";
+  const tb=document.createElement("tbody");
+
+  r.forEach(d=>{
+   const tr=document.createElement("tr");
+   const td1=document.createElement("td");
+   const td2=document.createElement("td");
+   td1.textContent=d.date;
+   d.numbers.forEach(n=>td2.appendChild(ball(n,categoryClass(a.freq[n]))));
+   tr.append(td1,td2);
+   tb.appendChild(tr);
+  });
+
+  table.appendChild(tb);
+  wrap.appendChild(table);
+  card.append(h,info,summary,wrap);
+  els.roundCards.appendChild(card);
+ }
+}
+
+function pairKey(a,b){return a<b?`${a}-${b}`:`${b}-${a}`}
+function buildPairStats(round){
+ const map=new Map();
+ round.forEach(d=>{
+  for(let i=0;i<d.numbers.length;i++){
+   for(let j=i+1;j<d.numbers.length;j++){
+    const a=d.numbers[i],b=d.numbers[j],key=pairKey(a,b);
+    if(!map.has(key))map.set(key,{a:Math.min(a,b),b:Math.max(a,b),count:0});
+    map.get(key).count++;
+   }
+  }
+ });
+ return [...map.values()];
+}
+function latestPairAppearance(a,b){
+ for(let i=0;i<draws.length;i++){
+  const nums=new Set(draws[i].numbers);
+  if(nums.has(a)&&nums.has(b))return{date:draws[i].date,gap:i};
+ }
+ return{date:"—",gap:"—"};
+}
+function renderPairs(){
+ const roundIndex=Number(els.pairRound?.value||0);
+ const minCount=Number(els.pairMin?.value||2);
+ const r=roundSlice(roundIndex);
+ const all=buildPairStats(r);
+
+ els.pairUnique.textContent=all.length||0;
+ els.pairRepeat.textContent=all.filter(x=>x.count>=2).length;
+ els.pairMax.textContent=all.length?Math.max(...all.map(x=>x.count)):0;
+ els.pairDraws.textContent=r.length;
+
+ const filtered=all
+  .filter(x=>x.count>=minCount)
+  .map(x=>({...x,...latestPairAppearance(x.a,x.b)}))
+  .sort((x,y)=>y.count-x.count || x.gap-y.gap || x.a-y.a || x.b-y.b);
+
+ els.pairRows.innerHTML="";
+ filtered.forEach(p=>{
+  const tr=document.createElement("tr");
+  const tdPair=document.createElement("td");
+  tdPair.append(ball(p.a),ball(p.b));
+  const tdCount=document.createElement("td");tdCount.textContent=p.count;
+  const tdDate=document.createElement("td");tdDate.textContent=p.date;
+  const tdGap=document.createElement("td");tdGap.textContent=p.gap;
+  tr.append(tdPair,tdCount,tdDate,tdGap);
+  els.pairRows.appendChild(tr);
+ });
+ els.pairEmpty.hidden=filtered.length>0;
+}
+
+
+function tripletKey(a,b,c){
+ const nums=[a,b,c].sort((x,y)=>x-y);
+ return `${nums[0]}-${nums[1]}-${nums[2]}`;
+}
+function buildTripletStats(round){
+ const map=new Map();
+ round.forEach(d=>{
+  for(let i=0;i<d.numbers.length;i++){
+   for(let j=i+1;j<d.numbers.length;j++){
+    for(let k=j+1;k<d.numbers.length;k++){
+     const nums=[d.numbers[i],d.numbers[j],d.numbers[k]].sort((a,b)=>a-b);
+     const key=tripletKey(nums[0],nums[1],nums[2]);
+     if(!map.has(key))map.set(key,{a:nums[0],b:nums[1],c:nums[2],count:0});
+     map.get(key).count++;
+    }
+   }
+  }
+ });
+ return [...map.values()];
+}
+function latestTripletAppearance(a,b,c){
+ for(let i=0;i<draws.length;i++){
+  const nums=new Set(draws[i].numbers);
+  if(nums.has(a)&&nums.has(b)&&nums.has(c))return{date:draws[i].date,gap:i};
+ }
+ return{date:"—",gap:"—"};
+}
+function renderTriplets(){
+ const roundIndex=Number(els.tripletRound?.value||0);
+ const minCount=Number(els.tripletMin?.value||2);
+ const r=roundSlice(roundIndex);
+ const all=buildTripletStats(r);
+
+ els.tripletUnique.textContent=all.length||0;
+ els.tripletRepeat.textContent=all.filter(x=>x.count>=2).length;
+ els.tripletMax.textContent=all.length?Math.max(...all.map(x=>x.count)):0;
+ els.tripletDraws.textContent=r.length;
+
+ const filtered=all
+  .filter(x=>x.count>=minCount)
+  .map(x=>({...x,...latestTripletAppearance(x.a,x.b,x.c)}))
+  .sort((x,y)=>y.count-x.count || x.gap-y.gap || x.a-y.a || x.b-y.b || x.c-y.c);
+
+ els.tripletRows.innerHTML="";
+ filtered.forEach(t=>{
+  const tr=document.createElement("tr");
+  const tdTriplet=document.createElement("td");
+  tdTriplet.append(ball(t.a),ball(t.b),ball(t.c));
+  const tdCount=document.createElement("td");tdCount.textContent=t.count;
+  const tdDate=document.createElement("td");tdDate.textContent=t.date;
+  const tdGap=document.createElement("td");tdGap.textContent=t.gap;
+  tr.append(tdTriplet,tdCount,tdDate,tdGap);
+  els.tripletRows.appendChild(tr);
+ });
+ els.tripletEmpty.hidden=filtered.length>0;
+}
+
+
+function coreCategory(freq){
+ if(freq===0)return{label:"Missing",cls:"red"};
+ if(freq===1)return{label:"Single",cls:"green"};
+ if(freq===2)return{label:"Two",cls:"blue"};
+ return{label:"Three+",cls:"orange"};
+}
+function buildCoreRanking(round){
+ const analysis=analyzeRound(round);
+ const pairs=buildPairStats(round).filter(p=>p.count>=2);
+ const triplets=buildTripletStats(round).filter(t=>t.count>=2);
+ const pairStrength=Array(MAX_NUMBER+1).fill(0);
+ const tripletStrength=Array(MAX_NUMBER+1).fill(0);
+
+ pairs.forEach(p=>{
+  const strength=p.count-1;
+  pairStrength[p.a]+=strength;
+  pairStrength[p.b]+=strength;
+ });
+ triplets.forEach(t=>{
+  const strength=t.count-1;
+  tripletStrength[t.a]+=strength;
+  tripletStrength[t.b]+=strength;
+  tripletStrength[t.c]+=strength;
+ });
+
+ const ranking=[];
+ for(let n=1;n<=MAX_NUMBER;n++){
+  const frequency=analysis.freq[n];
+  const frequencyScore=frequency*3;
+  const pairScore=pairStrength[n]*2;
+  const tripletScore=tripletStrength[n]*3;
+  ranking.push({
+   number:n,
+   frequency,
+   pairStrength:pairStrength[n],
+   tripletStrength:tripletStrength[n],
+   frequencyScore,
+   pairScore,
+   tripletScore,
+   score:frequencyScore+pairScore+tripletScore,
+   category:coreCategory(frequency)
+  });
+ }
+ ranking.sort((a,b)=>
+  b.score-a.score ||
+  b.tripletStrength-a.tripletStrength ||
+  b.pairStrength-a.pairStrength ||
+  b.frequency-a.frequency ||
+  a.number-b.number
+ );
+ return{ranking,pairs,triplets};
+}
+function renderCore(){
+ const roundIndex=Number(els.coreRound?.value||0);
+ const requestedCore=Number(els.coreSize?.value||12);
+ const requestedSuper=Number(els.superCoreSize?.value||7);
+ const r=roundSlice(roundIndex);
+
+ els.coreRows.innerHTML="";
+ els.coreList.innerHTML="";
+ els.superCoreList.innerHTML="";
+
+ if(!r.length){
+  els.coreEmpty.hidden=false;
+  els.coreLeader.textContent="—";
+  els.coreMaxScore.textContent="—";
+  els.corePairCount.textContent="0";
+  els.coreTripletCount.textContent="0";
+  els.coreList.textContent="—";
+  els.superCoreList.textContent="—";
+  return;
+ }
+
+ const result=buildCoreRanking(r);
+ const coreSize=Math.min(requestedCore,result.ranking.length);
+ const superSize=Math.min(requestedSuper,coreSize);
+ const coreNumbers=new Set(result.ranking.slice(0,coreSize).map(x=>x.number));
+ const superNumbers=new Set(result.ranking.slice(0,superSize).map(x=>x.number));
+
+ result.ranking.slice(0,coreSize).forEach(x=>els.coreList.appendChild(pill(x.number,x.category.cls)));
+ result.ranking.slice(0,superSize).forEach(x=>els.superCoreList.appendChild(pill(x.number,x.category.cls)));
+
+ els.coreLeader.textContent=result.ranking[0]?.number||"—";
+ els.coreMaxScore.textContent=result.ranking[0]?.score??"—";
+ els.corePairCount.textContent=result.pairs.length;
+ els.coreTripletCount.textContent=result.triplets.length;
+
+ result.ranking.forEach((x,index)=>{
+  const tr=document.createElement("tr");
+  const values=[
+   String(index+1),
+   "",
+   x.category.label,
+   String(x.frequency),
+   `${x.pairStrength} (${x.pairScore} б.)`,
+   `${x.tripletStrength} (${x.tripletScore} б.)`,
+   String(x.score),
+   superNumbers.has(x.number)?"Super Core":coreNumbers.has(x.number)?"Core":"—"
+  ];
+  values.forEach((value,col)=>{
+   const td=document.createElement("td");
+   if(col===1)td.appendChild(ball(x.number,x.category.cls));
+   else td.textContent=value;
+   tr.appendChild(td);
+  });
+  els.coreRows.appendChild(tr);
+ });
+ els.coreEmpty.hidden=result.ranking.length>0;
+}
+
+
+function choose(n,k){
+ if(!Number.isInteger(n)||!Number.isInteger(k)||k<0||n<0||k>n)return 0;
+ k=Math.min(k,n-k);
+ let result=1;
+ for(let i=1;i<=k;i++)result=result*(n-k+i)/i;
+ return Math.round(result);
+}
+function templateCode(counts){
+ return `M${counts.missing}-S${counts.singles}-T${counts.twos}-Th${counts.threes}`;
+}
+function classifyDrawByRound(draw,analysis){
+ const sets={
+  missing:new Set(analysis.groups.missing),
+  singles:new Set(analysis.groups.singles),
+  twos:new Set(analysis.groups.twos),
+  threes:new Set(analysis.groups.threes)
+ };
+ const counts={missing:0,singles:0,twos:0,threes:0};
+ draw.numbers.forEach(n=>{
+  if(sets.missing.has(n))counts.missing++;
+  else if(sets.singles.has(n))counts.singles++;
+  else if(sets.twos.has(n))counts.twos++;
+  else if(sets.threes.has(n))counts.threes++;
+ });
+ return counts;
+}
+function templateCombinationCount(analysis,counts){
+ return choose(analysis.groups.missing.length,counts.missing)*
+  choose(analysis.groups.singles.length,counts.singles)*
+  choose(analysis.groups.twos.length,counts.twos)*
+  choose(analysis.groups.threes.length,counts.threes);
+}
+function historicalTemplates(){
+ const records=[];
+ for(let start=ROUND_SIZE;start<draws.length;start+=ROUND_SIZE){
+  const base=draws.slice(start,start+ROUND_SIZE);
+  const target=draws[start-1];
+  if(base.length!==ROUND_SIZE||!target)continue;
+  const analysis=analyzeRound(base);
+  const counts=classifyDrawByRound(target,analysis);
+  records.push({
+   code:templateCode(counts),
+   counts,
+   date:target.date,
+   combinations:templateCombinationCount(analysis,counts)
+  });
+ }
+ return records;
+}
+function renderTemplates(){
+ const roundIndex=Number(els.templateRound?.value||0);
+ const round=roundSlice(roundIndex);
+ els.templateRows.innerHTML="";
+
+ if(!round.length){
+  ["templateMissingSize","templateSinglesSize","templateTwosSize","templateThreesSize"].forEach(k=>els[k].textContent="—");
+  els.templateCode.textContent="—";els.templateTotal.textContent="—";
+  els.templateCombinations.textContent="—";els.templateStatus.textContent="Немає даних";
+  els.templateExplanation.textContent="Спочатку імпортуй реальні історичні тиражі.";
+  els.templateEmpty.hidden=false;
+  return;
+ }
+
+ const analysis=analyzeRound(round);
+ els.templateMissingSize.textContent=analysis.groups.missing.length;
+ els.templateSinglesSize.textContent=analysis.groups.singles.length;
+ els.templateTwosSize.textContent=analysis.groups.twos.length;
+ els.templateThreesSize.textContent=analysis.groups.threes.length;
+
+ const counts={
+  missing:Number(els.templateM.value||0),
+  singles:Number(els.templateS.value||0),
+  twos:Number(els.templateT.value||0),
+  threes:Number(els.templateTh.value||0)
+ };
+ const total=counts.missing+counts.singles+counts.twos+counts.threes;
+ const limits={
+  missing:analysis.groups.missing.length,
+  singles:analysis.groups.singles.length,
+  twos:analysis.groups.twos.length,
+  threes:analysis.groups.threes.length
+ };
+ const validValues=Object.values(counts).every(v=>Number.isInteger(v)&&v>=0);
+ const withinGroups=Object.keys(counts).every(k=>counts[k]<=limits[k]);
+ const valid=validValues&&withinGroups&&total===NUMBERS_PER_DRAW;
+ const combinations=valid?templateCombinationCount(analysis,counts):0;
+
+ els.templateCode.textContent=templateCode(counts);
+ els.templateTotal.textContent=total;
+ els.templateCombinations.textContent=combinations.toLocaleString("uk-UA");
+ els.templateStatus.textContent=valid?"Валідний":"Потрібне коригування";
+ els.templateExplanation.textContent=valid
+  ?`Шаблон формує ${combinations.toLocaleString("uk-UA")} комбінацій із категорій вибраного Round. Це підрахунок простору кандидатів, а не прогноз виграшу.`
+  :`Сума M+S+T+Th має дорівнювати ${NUMBERS_PER_DRAW}, а кожне значення не може перевищувати розмір своєї категорії.`;
+
+ const history=historicalTemplates();
+ const grouped=new Map();
+ history.forEach(item=>{
+  if(!grouped.has(item.code))grouped.set(item.code,{...item,count:0});
+  const g=grouped.get(item.code);g.count++;
+  if(item.date>g.date){g.date=item.date;g.combinations=item.combinations}
+ });
+ const sorted=[...grouped.values()].sort((a,b)=>b.count-a.count||b.date.localeCompare(a.date));
+ sorted.forEach(item=>{
+  const tr=document.createElement("tr");
+  const share=history.length?`${(item.count/history.length*100).toFixed(1)}%`:"—";
+  [item.code,String(item.count),share,item.date,item.combinations.toLocaleString("uk-UA")].forEach(value=>{
+   const td=document.createElement("td");td.textContent=value;tr.appendChild(td);
+  });
+  els.templateRows.appendChild(tr);
+ });
+ els.templateEmpty.hidden=sorted.length>0;
+}
+
+
+function consecutivePairs(numbers){
+ const sorted=[...numbers].sort((a,b)=>a-b);
+ const pairs=[];
+ for(let i=0;i<sorted.length-1;i++){
+  if(sorted[i+1]===sorted[i]+1)pairs.push([sorted[i],sorted[i+1]]);
+ }
+ return pairs;
+}
+function selectedConsecutiveDraws(){
+ const value=els.consecutiveRound?.value||"all";
+ return value==="all"?draws:roundSlice(Number(value));
+}
+function countCombinationsByConsecutiveRange(minPairs,maxPairs){
+ const k=NUMBERS_PER_DRAW,n=MAX_NUMBER;
+ if(k>n||k<0)return 0;
+ let total=0;
+ const combo=[];
+ function walk(start){
+  if(combo.length===k){
+   const c=consecutivePairs(combo).length;
+   if(c>=minPairs&&c<=maxPairs)total++;
+   return;
+  }
+  const remaining=k-combo.length;
+  for(let value=start;value<=n-remaining+1;value++){
+   combo.push(value);
+   walk(value+1);
+   combo.pop();
+  }
+ }
+ // Exact enumeration is safe for the supported profile sizes used by this app.
+ // For very large spaces, return null and show that estimation is deferred.
+ const all=choose(n,k);
+ if(all>1500000)return null;
+ walk(1);
+ return total;
+}
+function renderConsecutive(){
+ const sample=selectedConsecutiveDraws();
+ const minPairs=Math.max(0,Number(els.consecutiveMin.value||0));
+ const maxPairs=Math.max(minPairs,Number(els.consecutiveMax.value||0));
+ els.consecutiveMax.value=maxPairs;
+
+ const pairMap=new Map();
+ const distribution=new Map();
+ let withPair=0;
+ sample.forEach((draw,drawIndex)=>{
+  const pairs=consecutivePairs(draw.numbers);
+  const count=pairs.length;
+  distribution.set(count,(distribution.get(count)||0)+1);
+  if(count>0)withPair++;
+  pairs.forEach(pair=>{
+   const code=`${pair[0]}–${pair[1]}`;
+   if(!pairMap.has(code))pairMap.set(code,{pair:code,count:0,lastDate:draw.date,lastIndex:drawIndex});
+   const item=pairMap.get(code);
+   item.count++;
+   if(draw.date>item.lastDate){item.lastDate=draw.date;item.lastIndex=drawIndex}
+  });
+ });
+
+ els.consecutiveDraws.textContent=sample.length;
+ els.consecutiveWithPair.textContent=withPair;
+ els.consecutiveShare.textContent=sample.length?`${(withPair/sample.length*100).toFixed(1)}%`:"—";
+
+ const sortedPairs=[...pairMap.values()].sort((a,b)=>b.count-a.count||b.lastDate.localeCompare(a.lastDate));
+ els.consecutiveTopPair.textContent=sortedPairs.length?`${sortedPairs[0].pair} (${sortedPairs[0].count})`:"—";
+
+ els.consecutiveDistributionRows.innerHTML="";
+ const maxObserved=Math.max(0,...distribution.keys());
+ for(let c=0;c<=maxObserved;c++){
+  const count=distribution.get(c)||0;
+  const share=sample.length?`${(count/sample.length*100).toFixed(1)}%`:"—";
+  const tr=document.createElement("tr");
+  [String(c),String(count),share].forEach(value=>{
+   const td=document.createElement("td");td.textContent=value;tr.appendChild(td);
+  });
+  els.consecutiveDistributionRows.appendChild(tr);
+ }
+
+ els.consecutivePairRows.innerHTML="";
+ sortedPairs.forEach(item=>{
+  const latestIndex=sample.findIndex(d=>d.date===item.lastDate);
+  const drawsAgo=latestIndex>=0?latestIndex:"—";
+  const tr=document.createElement("tr");
+  [item.pair,String(item.count),item.lastDate,String(drawsAgo)].forEach(value=>{
+   const td=document.createElement("td");td.textContent=value;tr.appendChild(td);
+  });
+  els.consecutivePairRows.appendChild(tr);
+ });
+ els.consecutiveEmpty.hidden=sortedPairs.length>0;
+
+ const all=choose(MAX_NUMBER,NUMBERS_PER_DRAW);
+ const filtered=countCombinationsByConsecutiveRange(minPairs,maxPairs);
+ const historicalPass=sample.filter(d=>{
+  const count=consecutivePairs(d.numbers).length;
+  return count>=minPairs&&count<=maxPairs;
+ }).length;
+
+ els.consecutiveAllCombinations.textContent=all.toLocaleString("uk-UA");
+ if(filtered===null){
+  els.consecutiveFilteredCombinations.textContent="Завеликий простір";
+  els.consecutiveRemainingShare.textContent="—";
+ }else{
+  els.consecutiveFilteredCombinations.textContent=filtered.toLocaleString("uk-UA");
+  els.consecutiveRemainingShare.textContent=all?`${(filtered/all*100).toFixed(2)}%`:"—";
+ }
+ els.consecutiveHistoricalPass.textContent=sample.length
+  ?`${historicalPass}/${sample.length} (${(historicalPass/sample.length*100).toFixed(1)}%)`
+  :"—";
+
+ els.consecutiveExplanation.textContent=
+  `Активний фільтр допускає від ${minPairs} до ${maxPairs} послідовних пар у комбінації. `+
+  `Історична частка показує, скільки реальних тиражів пройшли б цей фільтр. `+
+  `Це статистичне звуження множини кандидатів, а не прогноз результату.`;
+}
+
+
+function twoThirdsExpected(total){
+ return total*2/3;
+}
+function formatRange(value){
+ const low=Math.floor(value),high=Math.ceil(value);
+ return low===high?String(low):`${low}–${high}`;
+}
+function signed(value,digits=1){
+ const rounded=Number(value.toFixed(digits));
+ return `${rounded>0?"+":""}${rounded}`;
+}
+function chronologicalDraws(){
+ return [...draws].sort((a,b)=>a.date.localeCompare(b.date));
+}
+function sequentialRoundStages(maxStages=6){
+ const chronological=chronologicalDraws();
+ const stages=[];
+ const seen=new Set();
+ for(let i=0;i<maxStages;i++){
+  const start=i*ROUND_SIZE;
+  const block=chronological.slice(start,start+ROUND_SIZE);
+  if(block.length!==ROUND_SIZE)break;
+  const before=MAX_NUMBER-seen.size;
+  const newlySeen=new Set();
+  block.forEach(draw=>draw.numbers.forEach(n=>{
+   if(!seen.has(n))newlySeen.add(n);
+  }));
+  newlySeen.forEach(n=>seen.add(n));
+  const expected=twoThirdsExpected(before);
+  stages.push({
+   stage:i+1,
+   before,
+   expected,
+   actual:newlySeen.size,
+   cumulative:seen.size,
+   remaining:MAX_NUMBER-seen.size,
+   deviation:newlySeen.size-expected
+  });
+ }
+ return stages;
+}
+function theoreticalCategories(uniqueCount){
+ const singles=twoThirdsExpected(uniqueCount);
+ const remainingAfterSingles=Math.max(0,uniqueCount-singles);
+ const twos=twoThirdsExpected(remainingAfterSingles);
+ const threes=Math.max(0,uniqueCount-singles-twos);
+ return{singles,twos,threes};
+}
+function rollingRoundAnalyses(){
+ const chronological=chronologicalDraws();
+ const rows=[];
+ for(let start=0;start+ROUND_SIZE<=chronological.length;start++){
+  const block=chronological.slice(start,start+ROUND_SIZE);
+  const analysis=analyzeRound(block);
+  const expected=theoreticalCategories(analysis.unique);
+  rows.push({
+   from:block[0].date,
+   to:block[block.length-1].date,
+   unique:analysis.unique,
+   actual:{
+    singles:analysis.groups.singles.length,
+    twos:analysis.groups.twos.length,
+    threes:analysis.groups.threes.length
+   },
+   expected
+  });
+ }
+ return rows;
+}
+function renderTwoThirds(){
+ const selectedIndex=Number(els.twoThirdsRound?.value||0);
+ const round=roundSlice(selectedIndex);
+ els.twoThirdsFieldSize.textContent=MAX_NUMBER;
+
+ if(round.length){
+  const analysis=analyzeRound(round);
+  const expectedFirst=twoThirdsExpected(MAX_NUMBER);
+  els.twoThirdsUniqueActual.textContent=analysis.unique;
+  els.twoThirdsUniqueExpected.textContent=formatRange(expectedFirst);
+  els.twoThirdsUniqueDeviation.textContent=signed(analysis.unique-expectedFirst);
+
+  const expected=theoreticalCategories(analysis.unique);
+  const categoryData=[
+   ["Singles",expected.singles,analysis.groups.singles.length],
+   ["Twos",expected.twos,analysis.groups.twos.length],
+   ["Threes+",expected.threes,analysis.groups.threes.length]
+  ];
+  els.twoThirdsCategoryRows.innerHTML="";
+  categoryData.forEach(([name,theory,actual])=>{
+   const tr=document.createElement("tr");
+   [name,formatRange(theory),String(actual),signed(actual-theory)].forEach(value=>{
+    const td=document.createElement("td");td.textContent=value;tr.appendChild(td);
+   });
+   els.twoThirdsCategoryRows.appendChild(tr);
+  });
+  els.twoThirdsCurrentExplanation.textContent=
+   `У вибраному Round є ${analysis.unique} унікальних чисел. `+
+   `Модель 2/3 дає орієнтири приблизно ${formatRange(expected.singles)} Singles, `+
+   `${formatRange(expected.twos)} Twos і ${formatRange(expected.threes)} Threes+.`;
+ }else{
+  els.twoThirdsUniqueActual.textContent="—";
+  els.twoThirdsUniqueExpected.textContent=formatRange(twoThirdsExpected(MAX_NUMBER));
+  els.twoThirdsUniqueDeviation.textContent="—";
+  els.twoThirdsCategoryRows.innerHTML="";
+  els.twoThirdsCurrentExplanation.textContent="У вибраному Round немає даних.";
+ }
+
+ const stages=sequentialRoundStages();
+ els.twoThirdsStageRows.innerHTML="";
+ stages.forEach(item=>{
+  const tr=document.createElement("tr");
+  [
+   `Round ${item.stage}`,
+   String(item.before),
+   formatRange(item.expected),
+   String(item.actual),
+   String(item.cumulative),
+   String(item.remaining),
+   signed(item.deviation)
+  ].forEach(value=>{
+   const td=document.createElement("td");td.textContent=value;tr.appendChild(td);
+  });
+  els.twoThirdsStageRows.appendChild(tr);
+ });
+
+ const history=rollingRoundAnalyses();
+ els.twoThirdsHistoryRows.innerHTML="";
+ let sumS=0,sumT=0,sumTh=0;
+ history.forEach(item=>{
+  const ds=Math.abs(item.actual.singles-item.expected.singles);
+  const dt=Math.abs(item.actual.twos-item.expected.twos);
+  const dth=Math.abs(item.actual.threes-item.expected.threes);
+  sumS+=ds;sumT+=dt;sumTh+=dth;
+  const tr=document.createElement("tr");
+  [
+   `${item.from} → ${item.to}`,
+   String(item.unique),
+   `${item.actual.singles} / ${formatRange(item.expected.singles)}`,
+   `${item.actual.twos} / ${formatRange(item.expected.twos)}`,
+   `${item.actual.threes} / ${formatRange(item.expected.threes)}`,
+   (ds+dt+dth).toFixed(1)
+  ].forEach(value=>{
+   const td=document.createElement("td");td.textContent=value;tr.appendChild(td);
+  });
+  els.twoThirdsHistoryRows.appendChild(tr);
+ });
+ els.twoThirdsWindows.textContent=history.length;
+ els.twoThirdsAvgSinglesDev.textContent=history.length?(sumS/history.length).toFixed(2):"—";
+ els.twoThirdsAvgTwosDev.textContent=history.length?(sumT/history.length).toFixed(2):"—";
+ els.twoThirdsAvgThreesDev.textContent=history.length?(sumTh/history.length).toFixed(2):"—";
+ els.twoThirdsEmpty.hidden=history.length>0;
+}
+
+
+function choose(n,k){
+ if(k<0||k>n)return 0;
+ k=Math.min(k,n-k);
+ let r=1;
+ for(let i=1;i<=k;i++)r=r*(n-k+i)/i;
+ return Math.round(r);
+}
+function renderCounter(){
+ const rows=[
+ ["Усі можливі комбінації",choose(MAX_NUMBER,NUMBERS_PER_DRAW).toLocaleString("uk-UA")],
+ ["Template Builder","очікує Candidate Generator"],
+ ["Consecutive Filter","очікує Candidate Generator"],
+ ["2/3 Rule","очікує Candidate Generator"],
+ ["Pair Analyzer","очікує Candidate Generator"],
+ ["Triplet Analyzer","очікує Candidate Generator"],
+ ["Core Builder","очікує Candidate Generator"]
+ ];
+ const body=document.getElementById("counterRows");
+ if(!body)return;
+ body.innerHTML="";
+ rows.forEach(r=>{
+   const tr=document.createElement("tr");
+   r.forEach(v=>{const td=document.createElement("td");td.textContent=v;tr.appendChild(td);});
+   body.appendChild(tr);
+ });
+}
+
+function render(){renderArchive();renderAnalysis();renderRounds();renderPairs();renderTriplets();renderCore();renderTemplates();renderConsecutive();renderTwoThirds();renderCounter()}
+
+async function loadCSV(force=false){
+ if(!CSV_FILE){
+  render();
+  setStatus(`Профіль "${currentProfile.name}" не має автоматичного CSV. Імпортуй файл або додай тираж вручну.`,"warn");
+  return;
+ }
+ const local=force?[]:normalize(Array.isArray(currentProfile.draws)?currentProfile.draws:[]);
+ setStatus(`Завантаження ${CSV_FILE}…`);
+ try{
+  const res=await fetch(CSV_FILE+"?v="+Date.now(),{cache:"no-store"});
+  if(!res.ok)throw new Error(`HTTP ${res.status}`);
+  const csvDraws=parseCSV(await res.text());
+  const csvDates=new Set(csvDraws.map(d=>d.date));
+  const localOnly=local.filter(d=>!csvDates.has(d.date));
+  draws=normalize([...localOnly,...csvDraws]);
+  save();render();
+  const extra=localOnly.length?` + ${localOnly.length} локальних`:"";
+  setStatus(`${currentProfile.name}: завантажено ${csvDraws.length} тиражів із CSV${extra}.`,"ok");
+ }catch(err){
+  draws=local;render();
+  setStatus(local.length
+   ?`${currentProfile.name}: CSV недоступний, використано ${local.length} локальних тиражів.`
+   :`Не вдалося прочитати ${CSV_FILE}: ${err.message}`,"warn");
+ }
+}
+
+document.querySelectorAll(".tab").forEach(btn=>btn.addEventListener("click",()=>{
+ document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===btn));
+ document.querySelectorAll(".panel").forEach(p=>p.classList.toggle("active",p.id===btn.dataset.tab));
+}));
+
+$("#addBtn").addEventListener("click",()=>{
+ const inputs=numberInputs();
+ const d={date:els.date.value,numbers:inputs.map(x=>Number(x.value))};
+ const err=validateDraw(d);if(err)return setStatus(err,"warn");
+ if(draws.some(x=>x.date===d.date))return setStatus("Тираж із цією датою вже існує.","warn");
+ draws=normalize([d,...draws]);save();render();
+ els.date.value="";inputs.forEach(x=>x.value="");
+ setStatus("Тираж додано. Rounds і категорії перераховано.","ok");
+});
+$("#reloadBtn").addEventListener("click",()=>{draws=[];currentProfile.draws=[];persistProfiles();loadCSV(true)});
+$("#clearBtn").addEventListener("click",()=>{
+ if(!confirm("Скинути локальні зміни та знову зчитати CSV?"))return;
+ draws=[];currentProfile.draws=[];persistProfiles();loadCSV(true);
+});
+$("#fileInput").addEventListener("change",async e=>{
+ const f=e.target.files[0];if(!f)return;
+ try{draws=parseCSV(await f.text());save();render();setStatus(`Імпортовано ${draws.length} тиражів.`,"ok")}
+ catch(err){setStatus("Помилка імпорту: "+err.message,"bad")}
+ finally{e.target.value=""}
+});
+
+els.lotterySelect.addEventListener("change",()=>switchProfile(els.lotterySelect.value));
+$("#newLotteryBtn").addEventListener("click",()=>{
+ const name=els.newLotteryName.value.trim();
+ const max=Number(els.lotteryMax.value),pick=Number(els.lotteryPick.value),round=Number(els.lotteryRoundSize.value);
+ if(!name)return setStatus("Введи назву нової лотереї.","warn");
+ if(!Number.isInteger(max)||max<3||max>99)return setStatus("Максимальне число має бути від 3 до 99.","warn");
+ if(!Number.isInteger(pick)||pick<2||pick>=max||pick>20)return setStatus("Некоректна кількість чисел у тиражі.","warn");
+ if(!Number.isInteger(round)||round<2||round>50)return setStatus("Round має містити від 2 до 50 тиражів.","warn");
+ persistProfiles();
+ const id=uniqueProfileId(name);
+ profiles[id]={id,name,maxNumber:max,numbersPerDraw:pick,roundSize:round,csvFile:"",draws:[]};
+ activeProfileId=id;els.newLotteryName.value="";
+ persistProfiles();applyProfile(profiles[id]);
+ setStatus(`Створено профіль "${name}". Імпортуй його історичний CSV.`,"ok");
+});
+$("#renameLotteryBtn").addEventListener("click",()=>{
+ const name=els.newLotteryName.value.trim();
+ if(!name)return setStatus("Введи нову назву в полі.","warn");
+ currentProfile.name=name;profiles[activeProfileId]=currentProfile;persistProfiles();updateProfileSelect();
+ els.newLotteryName.value="";setStatus("Профіль перейменовано.","ok");
+});
+$("#deleteLotteryBtn").addEventListener("click",()=>{
+ if(activeProfileId===DEFAULT_PROFILE_ID)return setStatus("Базовий профіль Mini Renta видаляти не можна.","warn");
+ if(!confirm(`Видалити профіль "${currentProfile.name}" і його локальні дані?`))return;
+ delete profiles[activeProfileId];activeProfileId=DEFAULT_PROFILE_ID;
+ localStorage.setItem(ACTIVE_PROFILE_KEY,activeProfileId);applyProfile(profiles[activeProfileId]);
+ setStatus("Профіль видалено. Активовано Mini Renta.","ok");
+});
+
+els.pairRound.addEventListener("change",renderPairs);
+els.pairMin.addEventListener("change",renderPairs);
+els.tripletRound.addEventListener("change",renderTriplets);
+els.tripletMin.addEventListener("change",renderTriplets);
+els.coreRound.addEventListener("change",renderCore);
+els.coreSize.addEventListener("change",renderCore);
+els.superCoreSize.addEventListener("change",renderCore);
+els.templateRound.addEventListener("change",renderTemplates);
+[els.templateM,els.templateS,els.templateT,els.templateTh].forEach(el=>el.addEventListener("input",renderTemplates));
+els.consecutiveRound.addEventListener("change",renderConsecutive);
+[els.consecutiveMin,els.consecutiveMax].forEach(el=>el.addEventListener("input",renderConsecutive));
+els.twoThirdsRound.addEventListener("change",renderTwoThirds);
+$("#exportBtn").addEventListener("click",()=>{
+ if(!draws.length)return setStatus("Немає даних для експорту.","warn");
+ const blob=new Blob([toCSV(draws)],{type:"text/csv;charset=utf-8"});
+ const url=URL.createObjectURL(blob),a=document.createElement("a");
+ a.href=url;a.download=`${slugify(currentProfile.name)}-history.csv`;a.click();URL.revokeObjectURL(url);
+});
+loadProfiles();
+applyProfile(profiles[activeProfileId]);
+if(activeProfileId===DEFAULT_PROFILE_ID){
+ loadCSV();
+}else{
+ setStatus(`Активна лотерея: ${currentProfile.name}. Тиражів: ${draws.length}.`,"ok");
+}
+})();
+</script>
+</body>
+</html>
